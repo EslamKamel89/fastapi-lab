@@ -2,46 +2,59 @@ import json
 from typing import Annotated
 
 import uvicorn
-from fastapi import Body, FastAPI
+from fastapi import Body, Depends, FastAPI, Header, HTTPException, Path
 from pydantic import BaseModel, Field, StringConstraints, validate_call
 from pydantic_core._pydantic_core import ValidationError
 
 app = FastAPI()
 
 
-class Item(BaseModel):
-    name: str = Field(..., min_length=4)
-    description: str | None = None
-    price: float
+def get_db_session():
+    print("DB Session started")
+    db = {
+        1: {"name": "item 1"},
+        2: {"name": "item 2"},
+    }
+    try:
+        yield db
+    finally:
+        print("DB session tear down")
 
 
-class Offer(BaseModel):
-    offer: float | None = None
+DBSession = Annotated[dict[int, dict[str, str]], Depends(get_db_session)]
+
+
+async def get_user(
+    token: Annotated[str | None, Header()] = None,
+):
+    print("Checking user")
+    return {"username": token or "Eslam Kamel"}
+
+
+User = Annotated[dict[str, str], Depends(get_user)]
+
+
+@app.get("/item/{item_id}")
+async def read_item(item_id: Annotated[int, Path(g=0)], db: DBSession, user: User):
+    if item_id not in db:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"item": db.get(item_id, {}), "user": user}
+
+
+class ItemCreate(BaseModel):
+    name: str
+    price: float | None = None
 
 
 @app.post("/item")
 async def create_item(
-    item: Item = Body(...),
-    offer: Offer = Body(...),
-    flower: str = Body(...),
+    item: ItemCreate,
+    db: DBSession,
+    user: User,
 ):
-    return {"item": item, "offer": offer}
-
-
-# @app.post("/item")
-# async def create_item(
-#     name: str = Body(...),
-#     description: str | None = Body(None),
-#     price: float = Body(),
-#     offer: float | None = Body(None),
-# ):
-#     items = {
-#         "name": name,
-#         "description": description,
-#         "price": price,
-#         "offer": offer,
-#     }
-#     return {k: v for (k, v) in items.items() if v is not None}
+    new_id = max(db.keys()) + 1
+    db[new_id] = {"name": item.name}
+    return item
 
 
 if __name__ == "__main__":
