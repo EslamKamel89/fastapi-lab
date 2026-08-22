@@ -2,7 +2,7 @@ import json
 from typing import Annotated
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import Body, FastAPI
 from pydantic import BaseModel, Field, StringConstraints, validate_call
 from pydantic_core._pydantic_core import ValidationError
 
@@ -10,32 +10,38 @@ app = FastAPI()
 
 
 class Item(BaseModel):
-    name: str = Field(..., min_length=3)
+    name: str = Field(..., min_length=4)
     description: str | None = None
     price: float
 
 
-@validate_call
-def validate_name(name: Annotated[str, StringConstraints(min_length=4)]):
-    return name
+class Offer(BaseModel):
+    offer: float | None = None
 
 
-@app.get("/test")
-async def test():
-    try:
-        name = validate_name("Ali")
-        print("name is valid")
-        return name
-    except ValidationError as e:
-        print("Name not valid")
-        print(e)
-        return json.loads(e.json())
+@app.post("/item")
+async def create_item(
+    item: Item = Body(...),
+    offer: Offer = Body(...),
+    flower: str = Body(...),
+):
+    return {"item": item, "offer": offer}
 
 
-@app.post("/item", response_model=Item)
-async def create_item(item: Item):
-    print(item.model_dump(exclude={"price"}))
-    return item
+# @app.post("/item")
+# async def create_item(
+#     name: str = Body(...),
+#     description: str | None = Body(None),
+#     price: float = Body(),
+#     offer: float | None = Body(None),
+# ):
+#     items = {
+#         "name": name,
+#         "description": description,
+#         "price": price,
+#         "offer": offer,
+#     }
+#     return {k: v for (k, v) in items.items() if v is not None}
 
 
 if __name__ == "__main__":
