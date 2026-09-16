@@ -1,12 +1,9 @@
+from typing import TYPE_CHECKING
+
 from sqlmodel import Field, Relationship, SQLModel
 
-
-class User(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    username: str = Field(index=True, unique=True)
-    password: str
-    role: str = "customer"
-    reviews: list["Review"] = Relationship(back_populates="user")
+if TYPE_CHECKING:
+    from lab_3.models.user import User
 
 
 class Category(SQLModel, table=True):
@@ -20,7 +17,7 @@ class Product(SQLModel, table=True):
     name: str = Field(index=True, unique=True)
     description: str | None = None
     price: float
-    category_id: int | None = Field(foreign_key="category.id")
+    category_id: int = Field(foreign_key="category.id")
     category: "Category" = Relationship(back_populates="products")
     reviews: list["Review"] = Relationship(back_populates="product")
 
