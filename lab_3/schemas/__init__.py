@@ -1,3 +1,15 @@
-from .product import ProductBase, ProductCreate, ProductPublic
+from .product import (
+    CategoryPublic,
+    ProductBase,
+    ProductCreate,
+    ProductPublic,
+    ReviewPublic,
+)
 
-__all__ = ["ProductBase", "ProductCreate", "ProductPublic"]
+__all__ = [
+    "CategoryPublic",
+    "ProductBase",
+    "ProductCreate",
+    "ProductPublic",
+    "ReviewPublic",
+]
