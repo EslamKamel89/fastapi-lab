@@ -220,3 +220,6 @@ __marimo__/
 .streamlit/secrets.toml
 
 transcripts
+summarize.py
+lab_3.txt
+.llmignore
